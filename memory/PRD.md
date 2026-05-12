@@ -71,3 +71,12 @@ Premium full-stack multi-page web app called **Mitharva AI** — India's first A
 - Validate frontend UX flow with screenshot/visual test
 - Real Whisper STT for crisper voice transcription on the server side
 - Add deferred onboarding wizard
+
+## Iteration 2 — Feb 2026 (Deferred items completed)
+- ✅ **OpenAI Whisper STT** — `POST /api/voice/stt` (multipart upload, max 25MB, auto-language). InterviewRoom now uses MediaRecorder→Whisper as the primary STT (fallback toggle to browser Web Speech available)
+- ✅ **Resume PDF parsing** — `POST /api/resume/parse` extracts text via pypdf, parses to structured JSON via Gemini 3 Flash; saved to user profile. InterviewSetup step 4 fully wired with skill chips after upload
+- ✅ **Onboarding Wizard** — 3-step modal on first dashboard visit; `POST /api/profile/onboarding` saves preparation_stage / previous_attempts / challenges / preferred_language
+- ✅ **PDF Report Download** — `GET /api/sessions/{id}/report.pdf` returns reportlab-generated branded PDF with score block, dimension bars, full transcript, action plan, Sanskrit watermark. Wired to Results page Download button
+- ✅ **44/44 backend tests passing** (31 regression + 13 new)
+- ✅ Frontend visual e2e verified (Dashboard, Setup, Practice, Current Affairs)
+

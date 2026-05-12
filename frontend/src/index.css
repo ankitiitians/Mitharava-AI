@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* LIGHT THEME — cream + warm gold + deep navy text */
+    --background: 38 40% 97%;
+    --foreground: 224 60% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 60% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 60% 12%;
+    --primary: 224 60% 15%;
+    --primary-foreground: 38 40% 97%;
+    --secondary: 38 30% 92%;
+    --secondary-foreground: 224 60% 15%;
+    --muted: 38 25% 92%;
+    --muted-foreground: 224 20% 40%;
+    --accent: 44 60% 50%;
+    --accent-foreground: 224 60% 15%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 224 20% 88%;
+    --input: 224 20% 88%;
+    --ring: 44 60% 50%;
+    --radius: 0.75rem;
+
+    --chart-1: 44 60% 50%;
+    --chart-2: 224 60% 35%;
+    --chart-3: 24 80% 55%;
+    --chart-4: 173 58% 39%;
+    --chart-5: 280 65% 50%;
+
+    /* Brand */
+    --navy-deep: #080E1E;
+    --navy: #0F1B3D;
+    --navy-mid: #1A2B5F;
+    --navy-light: #243470;
+    --gold: #B8962E;
+    --gold-light: #D4AF55;
+    --gold-bright: #F0C755;
+    --border-gold: rgba(184, 150, 46, 0.25);
+    --glow-gold: 0 0 40px rgba(184, 150, 46, 0.35), 0 0 80px rgba(184, 150, 46, 0.1);
+
+    /* Surfaces (light mode) */
+    --surface-page: #FAF7EF;
+    --surface-card: #FFFFFF;
+    --surface-panel: #F3EEDC;
+  }
+
+  .dark {
+    /* DARK THEME — navy + gold (default) */
+    --background: 224 60% 6%;
+    --foreground: 38 30% 96%;
+    --card: 224 50% 12%;
+    --card-foreground: 38 30% 96%;
+    --popover: 224 50% 12%;
+    --popover-foreground: 38 30% 96%;
+    --primary: 44 60% 50%;
+    --primary-foreground: 224 60% 8%;
+    --secondary: 224 40% 18%;
+    --secondary-foreground: 38 30% 96%;
+    --muted: 224 30% 16%;
+    --muted-foreground: 38 15% 70%;
+    --accent: 44 60% 50%;
+    --accent-foreground: 224 60% 8%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 224 30% 22%;
+    --input: 224 30% 22%;
+    --ring: 44 60% 50%;
+
+    --chart-1: 44 70% 60%;
+    --chart-2: 200 80% 60%;
+    --chart-3: 24 80% 60%;
+    --chart-4: 173 60% 50%;
+    --chart-5: 280 65% 65%;
+
+    --surface-page: #080E1E;
+    --surface-card: #0F1B3D;
+    --surface-panel: #1A2B5F;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: var(--surface-page);
+    color: hsl(var(--foreground));
+    overflow-x: hidden;
+  }
+  body.dark, .dark body { background: var(--surface-page); }
+
+  /* Selection */
+  ::selection { background: var(--gold); color: #080E1E; }
+}
+
+@layer components {
+  /* Brand utilities */
+  .font-display { font-family: 'Cormorant Garamond', serif; }
+  .font-body    { font-family: 'Outfit', system-ui, sans-serif; }
+  .font-mono    { font-family: 'JetBrains Mono', monospace; }
+  .font-deva    { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+  .text-gold      { color: var(--gold); }
+  .text-gold-light{ color: var(--gold-light); }
+  .text-gold-bright{ color: var(--gold-bright); }
+
+  .bg-navy-deep   { background-color: var(--navy-deep); }
+  .bg-navy        { background-color: var(--navy); }
+  .bg-navy-mid    { background-color: var(--navy-mid); }
+  .bg-navy-light  { background-color: var(--navy-light); }
+
+  .border-gold-subtle { border-color: rgba(184, 150, 46, 0.2); }
+  .border-gold        { border-color: var(--gold); }
+
+  .gradient-gold-text {
+    background: linear-gradient(135deg, #B8962E 0%, #D4AF55 50%, #F0C755 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gradient-gold-bg {
+    background: linear-gradient(135deg, #B8962E 0%, #D4AF55 50%, #F0C755 100%);
+  }
+
+  .gradient-hero {
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(184,150,46,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(36,52,112,0.55) 0%, transparent 50%),
+      linear-gradient(135deg, #080E1E 0%, #0F1B3D 50%, #1A2B5F 100%);
+  }
+  :root:not(.dark) .gradient-hero {
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(184,150,46,0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 80%, rgba(184,150,46,0.10) 0%, transparent 55%),
+      linear-gradient(135deg, #FAF7EF 0%, #F5ECD2 50%, #EBDFB6 100%);
+  }
+
+  .glow-gold       { box-shadow: var(--glow-gold); }
+  .glow-gold-sm    { box-shadow: 0 0 24px rgba(184,150,46,0.25); }
+
+  .circuit-bg {
+    background-image:
+      linear-gradient(rgba(184,150,46,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(184,150,46,0.08) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .card-surface {
+    background: var(--surface-card);
+    border: 1px solid hsl(var(--border));
+    border-radius: 1rem;
+  }
+  .panel-surface {
+    background: var(--surface-panel);
+    border: 1px solid hsl(var(--border));
+    border-radius: 1rem;
+  }
+
+  /* Gold orb */
+  .orb-idle, .orb-listening, .orb-processing, .orb-speaking {
+    width: 140px; height: 140px; border-radius: 9999px;
+    background: radial-gradient(circle at 30% 30%, #F0C755 0%, #D4AF55 35%, #B8962E 65%, #6E5A1A 100%);
+    position: relative;
+    box-shadow: 0 0 60px rgba(184,150,46,0.45), inset 0 0 30px rgba(255,255,255,0.18);
+  }
+  .orb-idle { animation: pulse-gold 3s infinite; }
+  .orb-listening::before, .orb-listening::after {
+    content: ''; position: absolute; inset: -8px;
+    border: 2px solid rgba(184,150,46,0.6); border-radius: 9999px;
+    animation: ripple 1.6s infinite;
+  }
+  .orb-listening::after { animation-delay: 0.8s; }
+  @keyframes ripple {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+  .orb-processing::before {
+    content: ''; position: absolute; inset: -10px;
+    border: 3px solid transparent; border-top-color: var(--gold-bright);
+    border-right-color: var(--gold-bright); border-radius: 9999px;
+    animation: spin 1.2s linear infinite;
+  }
+  .orb-speaking { animation: pulse-gold 0.6s infinite; }
+  @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+  /* Waveform bars */
+  .wave-bars { display: inline-flex; gap: 3px; align-items: center; height: 24px; }
+  .wave-bars > span {
+    display: inline-block; width: 3px; background: var(--gold); border-radius: 2px;
+    animation: wave 1s ease-in-out infinite;
+  }
+  .wave-bars > span:nth-child(2) { animation-delay: 0.15s; }
+  .wave-bars > span:nth-child(3) { animation-delay: 0.3s; }
+  .wave-bars > span:nth-child(4) { animation-delay: 0.45s; }
+
+  /* Particle */
+  .particle {
+    position: absolute; width: 3px; height: 3px; border-radius: 9999px;
+    background: var(--gold); opacity: 0.6;
+    animation: drift 8s ease-in-out infinite;
+  }
+
+  /* Number ticker */
+  .num-mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(184,150,46,0.5), rgba(184,150,46,0.25));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(184,150,46,0.7); }
+
+  /* Glass navbar */
+  .glass-nav {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(8, 14, 30, 0.7);
+    border-bottom: 1px solid rgba(184, 150, 46, 0.18);
+  }
+  :root:not(.dark) .glass-nav {
+    background: rgba(250, 247, 239, 0.78);
+    border-bottom: 1px solid rgba(184, 150, 46, 0.25);
+  }
+
+  /* Hide scrollbar on testimonial track */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
+
+@layer utilities {
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.15s; }
+  .stagger-3 { animation-delay: 0.25s; }
+  .stagger-4 { animation-delay: 0.35s; }
+  .stagger-5 { animation-delay: 0.45s; }
+}

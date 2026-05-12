@@ -29,7 +29,7 @@ export default function Navbar() {
       }`}
       data-testid="public-navbar"
     >
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
+      <div className="w-full px-6 lg:px-12 xl:px-20 h-16 flex items-center justify-between">
         <Link to="/" data-testid="navbar-logo-link">
           <BrandLogo size={36} />
         </Link>

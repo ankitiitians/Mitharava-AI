@@ -80,3 +80,14 @@ Premium full-stack multi-page web app called **Mitharva AI** — India's first A
 - ✅ **44/44 backend tests passing** (31 regression + 13 new)
 - ✅ Frontend visual e2e verified (Dashboard, Setup, Practice, Current Affairs)
 
+
+## Iteration 3 — Feb 2026 (Branding + Role-Based UX)
+- ✅ **Logo refresh** — Real logo PNG (uploaded by user) replaces the SVG; navy + gold palette tightened to match (--navy: #0A1633, --gold: #C69A3C)
+- ✅ **Edge-to-edge layout** — All `max-w-[1400px] mx-auto` containers removed; site now uses `w-full px-6 lg:px-12 xl:px-20` for true edge-to-edge modern feel
+- ✅ **Role-based content filtering** — Each user sees content tailored to their `exam_focus`:
+  - Practice → defaults to "My Exam (UPSC/Banking/SSC/...)" filter
+  - Dashboard → 3 suggestion cards swap content per role (UPSC: DAF drill, Banking: SBI PO + RBI policy, IT: Amazon SDE mock etc.)
+  - Current Affairs → "Relevant" tab default + gold ⭐ Relevant badge per news item per exam mapping
+  - InterviewSetup → auto-selects user's exam category on first load
+- ✅ **RoleSwitcher widget** — In sidebar; dropdown opens upward; switches user.exam_focus via PATCH /api/profile, all content re-renders instantly with success toast
+

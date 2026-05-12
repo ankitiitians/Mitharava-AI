@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Home, Mic, FolderOpen, BookOpen, Newspaper, User, CreditCard, Settings, LogOut } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import ThemeToggle from "./ThemeToggle";
+import RoleSwitcher from "./RoleSwitcher";
 import { useAuth } from "../lib/auth";
 
 export default function Sidebar() {
@@ -55,6 +56,10 @@ export default function Sidebar() {
             {readiness >= 70 ? "Interview Ready" : "Keep practicing"}
           </div>
         </div>
+      </div>
+
+      <div className="px-5 py-3 border-t border-gold-subtle">
+        <RoleSwitcher className="w-full" />
       </div>
 
       <div className="px-3 pt-2 pb-4 flex items-center gap-2">

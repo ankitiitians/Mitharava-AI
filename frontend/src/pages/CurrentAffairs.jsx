@@ -1,26 +1,51 @@
 import { useEffect, useState } from "react";
-import { Loader2, X, Sparkles } from "lucide-react";
+import { Loader2, X, Sparkles, Star } from "lucide-react";
 import api from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
-const CATEGORIES = ["All", "Economy", "Polity", "International", "Environment", "Science & Tech", "Social", "Defence", "Sports"];
+const CATEGORIES = ["Relevant", "All", "Economy", "Polity", "International", "Environment", "Science & Tech", "Social", "Defence", "Sports"];
+
+// Map exam focus → most relevant news categories
+const EXAM_RELEVANCE = {
+  upsc: ["Polity", "Economy", "International", "Environment", "Science & Tech", "Social"],
+  banking: ["Economy", "Polity"],
+  ssc: ["Polity", "Economy", "Social", "Sports"],
+  railway: ["Polity", "Social", "Economy"],
+  campus_it: ["Science & Tech", "Economy"],
+  campus_mba: ["Economy", "International", "Polity"],
+};
 
 export default function CurrentAffairs() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [active, setActive] = useState(null);
-  const [tab, setTab] = useState("All");
+  const [tab, setTab] = useState("Relevant");
+
+  const relevantCats = EXAM_RELEVANCE[user?.exam_focus] || EXAM_RELEVANCE.upsc;
 
   useEffect(() => {
-    const q = tab === "All" ? "" : `?category=${encodeURIComponent(tab)}`;
-    api.get(`/current-affairs${q}`).then((r) => setItems(r.data)).catch(() => {});
-  }, [tab]);
+    api.get(`/current-affairs`).then((r) => {
+      let data = r.data;
+      if (tab === "Relevant") {
+        data = data.filter((d) => relevantCats.includes(d.category));
+      } else if (tab !== "All") {
+        data = data.filter((d) => d.category === tab);
+      }
+      setItems(data);
+    }).catch(() => {});
+  }, [tab, user?.exam_focus]);
 
   const today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   const top5 = items.slice(0, 5);
 
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="font-display text-3xl font-semibold text-foreground">Daily Current Affairs <span className="text-foreground/40 text-lg">— Updated every morning</span></h1>
-      <p className="text-foreground/60 mt-1">AI-powered questions generated from today's news for your exam.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-semibold text-foreground">Daily Current Affairs <span className="text-foreground/40 text-lg">— Updated every morning</span></h1>
+          <p className="text-foreground/60 mt-1">AI-powered questions generated from today's news — tailored for <span className="text-gold capitalize">{user?.exam_focus?.replace("_", " ") || "your exam"}</span>.</p>
+        </div>
+      </div>
 
       <section className="mt-6 rounded-2xl border-2 border-gold p-6 bg-[rgba(184,150,46,0.04)]">
         <div className="text-xs tracking-[0.2em] text-gold">📰 TODAY'S TOP 5 — {today.toUpperCase()}</div>
@@ -51,17 +76,30 @@ export default function CurrentAffairs() {
       </div>
 
       <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((n) => (
-          <div key={n.id} className="card-surface p-5 hover:-translate-y-0.5 hover:glow-gold-sm transition-all">
-            <div className="flex justify-between text-xs text-foreground/60">
-              <span className="px-2 py-0.5 rounded-full bg-[rgba(184,150,46,0.1)] text-gold">{n.category}</span>
-              <span>{n.published_date}</span>
+        {items.map((n) => {
+          const isRelevant = relevantCats.includes(n.category);
+          return (
+            <div key={n.id} className="card-surface p-5 hover:-translate-y-0.5 hover:glow-gold-sm transition-all relative">
+              {isRelevant && (
+                <div className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold/10 border border-gold text-[10px] text-gold font-medium">
+                  <Star size={10} className="fill-gold" /> Relevant
+                </div>
+              )}
+              <div className="flex justify-between text-xs text-foreground/60">
+                <span className="px-2 py-0.5 rounded-full bg-[rgba(198,154,60,0.1)] text-gold">{n.category}</span>
+                <span>{n.published_date}</span>
+              </div>
+              <h3 className="font-semibold text-foreground mt-3 leading-snug pr-16">{n.title}</h3>
+              <p className="text-xs text-foreground/70 mt-2 line-clamp-3">{n.summary}</p>
+              <button data-testid={`ca-practice-${n.id}`} onClick={() => setActive(n)} className="mt-4 text-xs text-gold hover:underline">Practice This →</button>
             </div>
-            <h3 className="font-semibold text-foreground mt-3 leading-snug">{n.title}</h3>
-            <p className="text-xs text-foreground/70 mt-2 line-clamp-3">{n.summary}</p>
-            <button data-testid={`ca-practice-${n.id}`} onClick={() => setActive(n)} className="mt-4 text-xs text-gold hover:underline">Practice This →</button>
+          );
+        })}
+        {items.length === 0 && (
+          <div className="md:col-span-2 lg:col-span-3 card-surface p-10 text-center text-foreground/60">
+            No news in this category. Try "All" or "Relevant".
           </div>
-        ))}
+        )}
       </div>
 
       {active && <NewsQuestionsModal news={active} onClose={() => setActive(null)} />}

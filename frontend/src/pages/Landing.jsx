@@ -37,7 +37,7 @@ function Hero() {
       <div className="absolute -top-20 -left-20 h-[500px] w-[500px] rounded-full bg-gold/10 blur-[120px]" />
       <div className="absolute -bottom-40 -right-20 h-[500px] w-[500px] rounded-full bg-[#243470]/40 blur-[120px]" />
 
-      <div className="relative max-w-[1400px] mx-auto px-6 lg:px-10 pt-24 pb-20 grid lg:grid-cols-12 gap-12 items-center">
+      <div className="relative w-full px-6 lg:px-12 xl:px-20 pt-24 pb-20 grid lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-7 animate-fade-up">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold-subtle bg-[rgba(184,150,46,0.08)] text-gold text-xs font-medium tracking-wide">
             <Sparkles size={14} /> India's #1 AI Interview Coach
@@ -137,7 +137,7 @@ function ProblemSection() {
   return (
     <section className="relative py-24 bg-[var(--surface-card)] border-y border-gold-subtle">
       <div className="absolute top-0 inset-x-0 h-px gradient-gold-bg opacity-40" />
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20">
         <div className="text-center max-w-2xl mx-auto">
           <h2 className="font-display text-4xl sm:text-5xl font-semibold text-foreground">
             The Interview Preparation <span className="gradient-gold-text">Crisis</span> in India
@@ -180,7 +180,7 @@ function HowItWorks() {
   ];
   return (
     <section id="how" className="relative py-24">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20">
         <div className="text-center">
           <h2 className="font-display text-4xl sm:text-5xl font-semibold text-foreground">
             Three Steps to <span className="gradient-gold-text">Interview Mastery</span>
@@ -216,7 +216,7 @@ function FeatureShowcase() {
   return (
     <section className="relative py-24 gradient-hero overflow-hidden">
       <ParticleField count={20} />
-      <div className="relative max-w-[1400px] mx-auto px-6 lg:px-10 grid lg:grid-cols-2 gap-16 items-center">
+      <div className="relative w-full px-6 lg:px-12 xl:px-20 grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="text-xs tracking-[0.3em] text-gold font-medium">AI INTERVIEW STUDIO</div>
           <h2 className="font-display text-4xl sm:text-5xl font-semibold mt-3 text-foreground">
@@ -282,7 +282,7 @@ function ExamCategories() {
   const list = [["upsc","UPSC"],["ssc","SSC"],["banking","Banking"],["railway","Railway"],["campus_it","Campus IT"],["campus_mba","Campus MBA"]];
   return (
     <section className="py-24 bg-[var(--surface-card)] border-y border-gold-subtle">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20">
         <h2 className="font-display text-4xl sm:text-5xl font-semibold text-center text-foreground">
           Built for <span className="gradient-gold-text">Every Indian Exam</span>
         </h2>
@@ -351,7 +351,7 @@ function Comparison() {
                      <span className="text-foreground/60 text-xs">{v}</span>;
   return (
     <section className="py-24">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20">
         <h2 className="font-display text-4xl sm:text-5xl font-semibold text-center text-foreground">
           Why <span className="gradient-gold-text">Mitharva AI</span>?
         </h2>
@@ -402,7 +402,7 @@ function PricingSummary() {
   ];
   return (
     <section className="py-24 bg-[var(--surface-card)] border-y border-gold-subtle">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20">
         <h2 className="font-display text-4xl sm:text-5xl font-semibold text-center text-foreground">
           Simple <span className="gradient-gold-text">Pricing</span>
         </h2>
@@ -460,7 +460,7 @@ function Testimonials() {
   ];
   return (
     <section className="py-24">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20">
         <h2 className="font-display text-4xl sm:text-5xl font-semibold text-center text-foreground">
           Words from Our <span className="gradient-gold-text">Toppers</span>
         </h2>

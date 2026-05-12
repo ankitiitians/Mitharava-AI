@@ -2,28 +2,40 @@ import { useEffect, useState } from "react";
 import { Bookmark, Mic, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export default function Practice() {
+  const { user } = useAuth();
   const [questions, setQuestions] = useState([]);
-  const [filters, setFilters] = useState({ category: "all", difficulty: "all", type: "all" });
+  const [filters, setFilters] = useState({ category: "mine", difficulty: "all", type: "all" });
   const [active, setActive] = useState(null);
 
   useEffect(() => {
+    const cat = filters.category === "mine" ? (user?.exam_focus || "all") : filters.category;
     const params = new URLSearchParams();
-    if (filters.category !== "all") params.append("category", filters.category);
+    if (cat !== "all") params.append("category", cat);
     if (filters.difficulty !== "all") params.append("difficulty", filters.difficulty);
     if (filters.type !== "all") params.append("type", filters.type);
     api.get(`/questions?${params}`).then((r) => setQuestions(r.data)).catch(() => {});
-  }, [filters]);
+  }, [filters, user?.exam_focus]);
+
+  const focusLabel = ({ upsc: "UPSC", ssc: "SSC", banking: "Banking", railway: "Railway", campus_it: "Campus IT", campus_mba: "Campus MBA", hr: "HR" }[user?.exam_focus] || "All");
 
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="font-display text-3xl font-semibold text-foreground">Question Bank — <span className="gradient-gold-text">5,000+ Curated</span></h1>
-      <p className="text-foreground/60 mt-1">Practice individual questions with AI feedback.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-semibold text-foreground">Question Bank — <span className="gradient-gold-text">5,000+ Curated</span></h1>
+          <p className="text-foreground/60 mt-1">Practice individual questions with AI feedback.</p>
+        </div>
+        <div className="text-xs text-foreground/60">
+          Showing: <span className="text-gold font-semibold">{filters.category === "mine" ? `My Exam (${focusLabel})` : filters.category.replace("_", " ")}</span>
+        </div>
+      </div>
 
       <div className="mt-8 grid lg:grid-cols-[260px_1fr] gap-6">
         <aside className="card-surface p-5 space-y-5 h-fit">
-          <FilterGroup label="Category" options={[["all","All"],["upsc","UPSC"],["ssc","SSC"],["banking","Banking"],["railway","Railway"],["campus_it","Campus IT"],["campus_mba","Campus MBA"],["hr","HR"]]} value={filters.category} onChange={(v) => setFilters({...filters, category: v})} testidPrefix="filter-cat" />
+          <FilterGroup label="Category" options={[["mine", `My Exam (${focusLabel})`],["all","All Exams"],["upsc","UPSC"],["ssc","SSC"],["banking","Banking"],["railway","Railway"],["campus_it","Campus IT"],["campus_mba","Campus MBA"],["hr","HR"]]} value={filters.category} onChange={(v) => setFilters({...filters, category: v})} testidPrefix="filter-cat" />
           <FilterGroup label="Difficulty" options={[["all","All"],["easy","Easy"],["medium","Medium"],["hard","Hard"]]} value={filters.difficulty} onChange={(v) => setFilters({...filters, difficulty: v})} testidPrefix="filter-diff" />
           <FilterGroup label="Type" options={[["all","All"],["long_answer","Long Answer"],["situational","Situational"],["current_affairs","Current Affairs"],["hr","HR"],["technical","Technical"]]} value={filters.type} onChange={(v) => setFilters({...filters, type: v})} testidPrefix="filter-type" />
         </aside>
@@ -56,6 +68,10 @@ export default function Practice() {
       {active && <PracticeModal q={active} onClose={() => setActive(null)} />}
     </div>
   );
+}
+
+function labelFor(t) {
+  return ({ upsc: "UPSC", ssc: "SSC", banking: "Banking", railway: "Railway", campus_it: "Campus IT", campus_mba: "MBA", hr: "HR" }[t] || "All");
 }
 
 function FilterGroup({ label, options, value, onChange, testidPrefix }) {

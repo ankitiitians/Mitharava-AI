@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="relative border-t border-gold-subtle bg-navy-deep text-white/80" data-testid="public-footer">
       <div className="absolute top-0 left-0 right-0 h-px gradient-gold-bg opacity-50" />
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-16 grid grid-cols-2 md:grid-cols-5 gap-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20 py-16 grid grid-cols-2 md:grid-cols-5 gap-10">
         <div className="col-span-2">
           <BrandLogo size={44} tagline />
           <p className="font-deva text-gold/80 text-sm mt-4">अभ्यासेन सिद्धिः</p>
@@ -26,7 +26,7 @@ export default function Footer() {
         <FCol title="Company" links={[["About", "/about"], ["Careers", "#"], ["Contact", "#"], ["Press", "#"]]} />
       </div>
       <div className="border-t border-gold-subtle">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
+        <div className="w-full px-6 lg:px-12 xl:px-20 py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
           <div>© 2026 Mitharva AI • Privacy Policy • Terms of Service • Refund Policy</div>
           <div>Made with <span className="text-gold">❤</span> in India 🇮🇳</div>
         </div>

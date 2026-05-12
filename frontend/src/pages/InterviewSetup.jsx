@@ -1,11 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mic, Camera, Keyboard, ChevronRight, ChevronLeft, FileText, Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export default function InterviewSetup() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const fileRef = useRef(null);
   const [step, setStep] = useState(1);
   const [creating, setCreating] = useState(false);
@@ -20,6 +22,18 @@ export default function InterviewSetup() {
     mode: "voice_camera",
     company: "",
   });
+
+  // Auto-set to user's exam_focus on first load
+  useEffect(() => {
+    if (user?.exam_focus && user.exam_focus !== config.session_type) {
+      const subDefault = {
+        upsc: "full_mock", banking: "sbi_po", ssc: "cgl", railway: "ntpc",
+        campus_it: "tcs_digital", campus_mba: "hr_round",
+      }[user.exam_focus] || "general";
+      setConfig((c) => ({ ...c, session_type: user.exam_focus, sub_type: subDefault }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.exam_focus]);
 
   const categories = [
     { k: "upsc", icon: "🏛️", title: "UPSC Civil Services" },

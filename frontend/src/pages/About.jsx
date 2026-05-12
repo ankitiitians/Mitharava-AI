@@ -26,7 +26,7 @@ export default function About() {
       </section>
 
       <section className="py-20 bg-[var(--surface-card)] border-y border-gold-subtle">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-10 grid md:grid-cols-3 gap-8">
+        <div className="w-full px-6 lg:px-12 xl:px-20 grid md:grid-cols-3 gap-8">
           {[
             { icon: Target, title: "Mission", body: "Democratize interview preparation for every Indian aspirant regardless of geography or income." },
             { icon: Eye, title: "Vision", body: "Become the default interview preparation tool for India's 130+ lakh annual job seekers by 2030." },
@@ -44,7 +44,7 @@ export default function About() {
       </section>
 
       <section className="py-20">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
+        <div className="w-full px-6 lg:px-12 xl:px-20">
           <h2 className="font-display text-4xl font-semibold text-center text-foreground">
             <span className="gradient-gold-text">Market Opportunity</span>
           </h2>
@@ -62,7 +62,7 @@ export default function About() {
       </section>
 
       <section className="py-20 bg-[var(--surface-card)] border-y border-gold-subtle">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
+        <div className="w-full px-6 lg:px-12 xl:px-20">
           <h2 className="font-display text-4xl font-semibold text-center text-foreground">Meet the <span className="gradient-gold-text">Team</span></h2>
           <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {team.map((t, i) => (

@@ -34,21 +34,21 @@
     --chart-4: 173 58% 39%;
     --chart-5: 280 65% 50%;
 
-    /* Brand */
-    --navy-deep: #080E1E;
-    --navy: #0F1B3D;
-    --navy-mid: #1A2B5F;
-    --navy-light: #243470;
-    --gold: #B8962E;
-    --gold-light: #D4AF55;
-    --gold-bright: #F0C755;
-    --border-gold: rgba(184, 150, 46, 0.25);
-    --glow-gold: 0 0 40px rgba(184, 150, 46, 0.35), 0 0 80px rgba(184, 150, 46, 0.1);
+    /* Brand — matched to logo */
+    --navy-deep: #060B1C;
+    --navy: #0A1633;
+    --navy-mid: #142048;
+    --navy-light: #1E2C5E;
+    --gold: #C69A3C;
+    --gold-light: #DDB860;
+    --gold-bright: #F0CC6F;
+    --border-gold: rgba(198, 154, 60, 0.28);
+    --glow-gold: 0 0 50px rgba(198, 154, 60, 0.4), 0 0 100px rgba(198, 154, 60, 0.12);
 
     /* Surfaces (light mode) */
-    --surface-page: #FAF7EF;
+    --surface-page: #FAF6EC;
     --surface-card: #FFFFFF;
-    --surface-panel: #F3EEDC;
+    --surface-panel: #F3ECD4;
   }
 
   .dark {
@@ -79,9 +79,9 @@
     --chart-4: 173 60% 50%;
     --chart-5: 280 65% 65%;
 
-    --surface-page: #080E1E;
-    --surface-card: #0F1B3D;
-    --surface-panel: #1A2B5F;
+    --surface-page: #060B1C;
+    --surface-card: #0A1633;
+    --surface-panel: #142048;
   }
 }
 

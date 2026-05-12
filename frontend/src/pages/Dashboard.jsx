@@ -121,11 +121,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        {[
-          { icon: "🏛️", title: "UPSC Full Mock — Panel Mode", meta: "Hard • 30-45 min", sub: "Based on your DAF" },
-          { icon: "📰", title: "Current Affairs Speed Round", meta: "Medium • 15 min", sub: "Last 7 days news" },
-          { icon: "🗣️", title: "Confidence Drill", meta: "Easy • 10 min", sub: "Target weak areas" },
-        ].map((c) => (
+        {suggestionsFor(user?.exam_focus).map((c) => (
           <Link key={c.title} to="/interview/setup" data-testid={`suggest-${c.title.toLowerCase().replace(/[^a-z]+/g, '-').slice(0,30)}`} className="card-surface p-5 hover:glow-gold-sm hover:-translate-y-1 transition-all">
             <div className="text-3xl">{c.icon}</div>
             <div className="mt-3 font-semibold text-foreground">{c.title}</div>
@@ -153,6 +149,42 @@ export default function Dashboard() {
 
 function labelFor(t) {
   return { upsc: "UPSC", ssc: "SSC", banking: "Banking", railway: "Railway", campus_it: "Campus IT", campus_mba: "Campus MBA" }[t] || t;
+}
+
+function suggestionsFor(focus) {
+  const map = {
+    upsc: [
+      { icon: "🏛️", title: "UPSC Full Mock — Panel Mode", meta: "Hard • 30-45 min", sub: "Based on your DAF" },
+      { icon: "📰", title: "Current Affairs Speed Round", meta: "Medium • 15 min", sub: "Last 7 days news" },
+      { icon: "🗣️", title: "DAF Personality Drill", meta: "Easy • 10 min", sub: "Hobbies & home state" },
+    ],
+    banking: [
+      { icon: "🏦", title: "SBI PO — HR + GD", meta: "Hard • 30 min", sub: "RBI policy depth" },
+      { icon: "💹", title: "Banking Awareness Quiz", meta: "Medium • 15 min", sub: "CRR/SLR/NPA" },
+      { icon: "🗣️", title: "Why Banking? Practice", meta: "Easy • 10 min", sub: "Standard HR opener" },
+    ],
+    ssc: [
+      { icon: "📋", title: "SSC CGL Panel Mock", meta: "Hard • 30 min", sub: "Income Tax / Audit" },
+      { icon: "🇮🇳", title: "GS + Current Affairs", meta: "Medium • 15 min", sub: "GK focus" },
+      { icon: "🗣️", title: "Confidence Drill", meta: "Easy • 10 min", sub: "Nervousness fix" },
+    ],
+    railway: [
+      { icon: "🚂", title: "RRB NTPC Personality", meta: "Hard • 30 min", sub: "Operational scenarios" },
+      { icon: "📰", title: "Current Affairs Speed", meta: "Medium • 15 min", sub: "Transport policy" },
+      { icon: "🗣️", title: "Discipline & Integrity", meta: "Easy • 10 min", sub: "Core values" },
+    ],
+    campus_it: [
+      { icon: "💻", title: "Amazon SDE Mock", meta: "Hard • 45 min", sub: "System design + DSA" },
+      { icon: "🤝", title: "TCS Digital HR Round", meta: "Medium • 20 min", sub: "Values + STAR" },
+      { icon: "🚀", title: "Project Deep-Dive", meta: "Easy • 15 min", sub: "Resume walkthrough" },
+    ],
+    campus_mba: [
+      { icon: "🎓", title: "Consulting Case Mock", meta: "Hard • 45 min", sub: "Market sizing" },
+      { icon: "📊", title: "Finance Domain Round", meta: "Medium • 25 min", sub: "Markets + economy" },
+      { icon: "🗣️", title: "Why MBA? Practice", meta: "Easy • 10 min", sub: "Personal narrative" },
+    ],
+  };
+  return map[focus] || map.upsc;
 }
 
 function StatCard({ icon: Icon, label, value, sub }) {

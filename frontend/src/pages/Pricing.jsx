@@ -27,7 +27,7 @@ export default function Pricing() {
 
   return (
     <div className="py-20">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-12 xl:px-20">
         <div className="text-center">
           <h1 className="font-display text-5xl sm:text-6xl font-bold text-foreground">
             Pricing That <span className="gradient-gold-text">Respects Your Pocket</span>

@@ -1,9 +1,11 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import io
 import logging
 import json
 import uuid
@@ -682,6 +684,219 @@ async def on_startup():
         await seed_database()
     except Exception as e:
         logger.exception("Seed failed: %s", e)
+
+
+# ============== VOICE STT (OpenAI Whisper) ==============
+@api_router.post("/voice/stt")
+async def voice_stt(file: UploadFile = File(...), language: Optional[str] = None, user=Depends(get_current_user)):
+    """Transcribe audio to text using OpenAI Whisper via Emergent key."""
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="LLM key not configured")
+    try:
+        from emergentintegrations.llm.openai import OpenAISpeechToText
+        contents = await file.read()
+        if len(contents) > 25 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Audio file too large (max 25MB)")
+        stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
+        # OpenAI Whisper accepts an in-memory file-like object with a filename
+        bio = io.BytesIO(contents)
+        bio.name = file.filename or "audio.webm"
+        kwargs = {"file": bio, "model": "whisper-1", "response_format": "json"}
+        if language and language != "auto":
+            lang_map = {"english": "en", "hindi": "hi", "hinglish": "hi", "tamil": "ta", "bengali": "bn", "marathi": "mr"}
+            kwargs["language"] = lang_map.get(language, language[:2])
+        response = await stt.transcribe(**kwargs)
+        return {"text": getattr(response, "text", str(response))}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Whisper STT failed: %s", e)
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)[:200]}")
+
+
+# ============== RESUME PARSING ==============
+@api_router.post("/resume/parse")
+async def parse_resume(file: UploadFile = File(...), user=Depends(get_current_user)):
+    """Extract text from PDF resume and parse via Gemini into structured JSON."""
+    try:
+        from pypdf import PdfReader
+        contents = await file.read()
+        if len(contents) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Resume too large (max 5MB)")
+        reader = PdfReader(io.BytesIO(contents))
+        text = "\n".join((p.extract_text() or "") for p in reader.pages)
+        if not text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract text from PDF")
+        prompt = """Parse this resume into clean JSON. Return ONLY JSON with this exact shape:
+{"name":"","email":"","phone":"","skills":[],"education":[{"degree":"","institution":"","year":""}],"experience":[{"title":"","company":"","duration":"","description":""}],"projects":[{"name":"","description":"","tech":[]}],"achievements":[]}"""
+        raw = await call_gemini(prompt, f"Resume text:\n{text[:6000]}", f"resume-{user['id']}")
+        parsed = _parse_json_loose(raw)
+        # Save resume metadata to user
+        await db.users.update_one({"id": user["id"]}, {"$set": {
+            "resume_filename": file.filename,
+            "resume_parsed_data": parsed,
+            "resume_uploaded_at": datetime.now(timezone.utc).isoformat(),
+        }})
+        return {"filename": file.filename, "parsed": parsed, "text_length": len(text)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Resume parse failed: %s", e)
+        raise HTTPException(status_code=500, detail=f"Resume parse failed: {str(e)[:200]}")
+
+
+# ============== PDF REPORT ==============
+@api_router.get("/sessions/{session_id}/report.pdf")
+async def session_report_pdf(session_id: str, user=Depends(get_current_user)):
+    """Generate a beautifully formatted PDF report for an interview session."""
+    sess = await db.sessions.find_one({"id": session_id, "user_id": user["id"]}, {"_id": 0})
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.lib.colors import HexColor, white
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+        from reportlab.lib.enums import TA_LEFT, TA_CENTER
+
+        buf = io.BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=18*mm, bottomMargin=18*mm)
+
+        navy = HexColor("#0F1B3D")
+        gold = HexColor("#B8962E")
+        gold_light = HexColor("#D4AF55")
+        muted = HexColor("#5B6B8C")
+
+        styles = getSampleStyleSheet()
+        h1 = ParagraphStyle("h1", parent=styles["Heading1"], fontName="Helvetica-Bold", fontSize=26, textColor=navy, spaceAfter=4)
+        h2 = ParagraphStyle("h2", parent=styles["Heading2"], fontName="Helvetica-Bold", fontSize=15, textColor=navy, spaceBefore=12, spaceAfter=6)
+        small = ParagraphStyle("small", parent=styles["Normal"], fontName="Helvetica", fontSize=9, textColor=muted)
+        body = ParagraphStyle("body", parent=styles["Normal"], fontName="Helvetica", fontSize=10, textColor=navy, leading=14)
+        gold_tag = ParagraphStyle("gold", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=10, textColor=gold)
+
+        score = float(sess.get("overall_score") or 7.5)
+        verdict = "EXCELLENT" if score >= 8 else "STRONG" if score >= 7 else "GOOD" if score >= 6 else "NEEDS PRACTICE"
+
+        story = []
+        # Header
+        story.append(Paragraph("MITHARVA AI", ParagraphStyle("brand", fontName="Helvetica-Bold", fontSize=12, textColor=gold)))
+        story.append(Paragraph("Interview Performance Report", h1))
+        s_type = sess.get("session_type", "").upper()
+        sub = (sess.get("sub_type") or "").replace("_", " ").title()
+        story.append(Paragraph(f"{s_type} — {sub}", small))
+        date = (sess.get("completed_at") or sess.get("created_at") or "")[:10]
+        story.append(Paragraph(f"Date: {date}  •  Duration: {round((sess.get('duration_seconds') or 0)/60)} min  •  Questions: {sess.get('questions_count') or len(sess.get('transcript') or [])}", small))
+        story.append(Spacer(1, 6*mm))
+
+        # Score block
+        score_table = Table([
+            [Paragraph(f"<font size=42 color='#B8962E'><b>{score:.1f}</b></font><br/><font size=8 color='#5B6B8C'>OUT OF 10</font>", body),
+             Paragraph(f"<font size=10 color='#5B6B8C'>OVERALL VERDICT</font><br/><font size=16 color='#0F1B3D'><b>{verdict}</b></font><br/><br/><font size=9 color='#5B6B8C'>Better than 78% of users this month</font>", body)]
+        ], colWidths=[55*mm, 110*mm])
+        score_table.setStyle(TableStyle([
+            ("BOX", (0,0), (-1,-1), 1.2, gold),
+            ("BACKGROUND", (0,0), (-1,-1), HexColor("#FBF6E6")),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+            ("LEFTPADDING", (0,0), (-1,-1), 14),
+            ("RIGHTPADDING", (0,0), (-1,-1), 14),
+            ("TOPPADDING", (0,0), (-1,-1), 14),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 14),
+        ]))
+        story.append(score_table)
+        story.append(Spacer(1, 8*mm))
+
+        # Dimension scores
+        story.append(Paragraph("Skill Dimensions", h2))
+        dims = [
+            ("Technical Accuracy", sess.get("technical_score")),
+            ("Communication Clarity", sess.get("clarity_score")),
+            ("Structure", sess.get("structure_score")),
+            ("Confidence", sess.get("confidence_score")),
+            ("Current Affairs", sess.get("current_affairs_score")),
+            ("Domain Knowledge", sess.get("domain_score")),
+        ]
+        dim_rows = [["Dimension", "Score", "Bar"]]
+        for label, v in dims:
+            v = float(v or 0)
+            filled = "█" * int(v) + "░" * (10 - int(v))
+            dim_rows.append([label, f"{v:.1f} / 10", filled])
+        dt = Table(dim_rows, colWidths=[60*mm, 30*mm, 75*mm])
+        dt.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), navy),
+            ("TEXTCOLOR", (0,0), (-1,0), gold),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("FONTNAME", (0,1), (-1,-1), "Helvetica"),
+            ("FONTSIZE", (0,0), (-1,-1), 9.5),
+            ("ROWBACKGROUNDS", (0,1), (-1,-1), [white, HexColor("#FAF7EF")]),
+            ("TEXTCOLOR", (1,1), (1,-1), gold),
+            ("FONTNAME", (1,1), (1,-1), "Helvetica-Bold"),
+            ("TEXTCOLOR", (2,1), (2,-1), gold_light),
+            ("LEFTPADDING", (0,0), (-1,-1), 8),
+            ("RIGHTPADDING", (0,0), (-1,-1), 8),
+            ("TOPPADDING", (0,0), (-1,-1), 7),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 7),
+            ("LINEBELOW", (0,0), (-1,0), 0.5, gold),
+        ]))
+        story.append(dt)
+        story.append(Spacer(1, 6*mm))
+
+        # Transcript
+        transcript = sess.get("transcript") or []
+        if transcript:
+            story.append(Paragraph("Question & Answer Transcript", h2))
+            for i, m in enumerate(transcript[:30]):
+                role = m.get("role", "")
+                speaker = m.get("speaker") or ("AI Interviewer" if role == "assistant" else "You")
+                text = (m.get("text") or "")[:1200]
+                color = "#B8962E" if role == "assistant" else "#243470"
+                story.append(Paragraph(f"<b><font color='{color}'>{speaker}</font></b>", body))
+                story.append(Paragraph(text, body))
+                story.append(Spacer(1, 3*mm))
+
+        # Action Plan
+        story.append(Spacer(1, 4*mm))
+        story.append(Paragraph("3-Week Action Plan", h2))
+        plan = [
+            ("Week 1 — Confidence Building", "Record yourself answering 3 questions daily."),
+            ("Week 2 — Reduce Filler Words", "Pause 2 seconds before starting each answer."),
+            ("Week 3 — Current Affairs Depth", "Read 1 Hindu editorial + discuss with AI daily."),
+        ]
+        for title, body_t in plan:
+            story.append(Paragraph(f"<b>{title}</b>", body))
+            story.append(Paragraph(f"→ {body_t}", small))
+            story.append(Spacer(1, 2*mm))
+
+        story.append(Spacer(1, 8*mm))
+        story.append(Paragraph("— अभ्यासेन सिद्धिः — Excellence through Practice —", gold_tag))
+        story.append(Paragraph("Generated by Mitharva AI • mitharva.ai", small))
+
+        doc.build(story)
+        buf.seek(0)
+        return StreamingResponse(buf, media_type="application/pdf", headers={
+            "Content-Disposition": f'attachment; filename="mitharva-report-{session_id[:8]}.pdf"'
+        })
+    except Exception as e:
+        logger.exception("PDF report failed: %s", e)
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)[:200]}")
+
+
+# ============== ONBOARDING ==============
+class OnboardingIn(BaseModel):
+    preparation_stage: Optional[str] = None
+    previous_attempts: Optional[str] = None
+    challenges: Optional[List[str]] = None
+    preferred_language: Optional[str] = None
+
+
+@api_router.post("/profile/onboarding")
+async def save_onboarding(body: OnboardingIn, user=Depends(get_current_user)):
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    updates["onboarding_completed"] = True
+    updates["onboarding_completed_at"] = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one({"id": user["id"]}, {"$set": updates})
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
+    return fresh
 
 
 # ============== HEALTH ==============

@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mic, Camera, Keyboard, ChevronRight, ChevronLeft, FileText, Check } from "lucide-react";
+import { Mic, Camera, Keyboard, ChevronRight, ChevronLeft, FileText, Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
 export default function InterviewSetup() {
   const navigate = useNavigate();
+  const fileRef = useRef(null);
   const [step, setStep] = useState(1);
   const [creating, setCreating] = useState(false);
+  const [resume, setResume] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [config, setConfig] = useState({
     session_type: "upsc",
     sub_type: "full_mock",
@@ -42,6 +45,22 @@ export default function InterviewSetup() {
 
   const next = () => setStep((s) => Math.min(5, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
+
+  const handleResume = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const { data } = await api.post("/resume/parse", fd, { headers: { "Content-Type": "multipart/form-data" }});
+      setResume({ name: file.name, parsed: data.parsed });
+      toast.success("Resume parsed. Questions will be personalized.");
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Resume parse failed");
+    } finally { setUploading(false); }
+  };
 
   const begin = async () => {
     setCreating(true);
@@ -199,6 +218,7 @@ export default function InterviewSetup() {
               <Row label="Language" value={config.language} cap />
               <Row label="Interface" value={config.mode.replace("_", " + ")} cap />
               <Row label="Questions" value="~10–12 personalized" />
+              <Row label="Resume" value={resume ? `✅ ${resume.name}` : "Not uploaded"} />
             </div>
           </div>
         )}

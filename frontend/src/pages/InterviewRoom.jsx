@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Mic, MicOff, Pause, Play, X, Keyboard as KeyboardIcon, Camera as CameraIcon } from "lucide-react";
+import { Mic, MicOff, Pause, Play, X, Keyboard as KeyboardIcon, Camera as CameraIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -20,6 +20,8 @@ export default function InterviewRoom() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const recognitionRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const [session, setSession] = useState(null);
   const [transcript, setTranscript] = useState([]);
   const [orbState, setOrbState] = useState("idle"); // idle | listening | processing | speaking
@@ -35,6 +37,7 @@ export default function InterviewRoom() {
   const [textInput, setTextInput] = useState("");
   const [endConfirm, setEndConfirm] = useState(false);
   const [qIndex, setQIndex] = useState(0);
+  const [whisperMode, setWhisperMode] = useState(true); // Use Whisper STT by default
 
   // Load session
   useEffect(() => {
@@ -82,6 +85,7 @@ export default function InterviewRoom() {
       }
       window.speechSynthesis?.cancel();
       try { recognitionRef.current?.stop(); } catch {}
+      try { if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop(); } catch {}
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
@@ -100,8 +104,55 @@ export default function InterviewRoom() {
     window.speechSynthesis.speak(u);
   };
 
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     if (orbState !== "idle") return;
+    if (!streamRef.current) {
+      toast.error("Microphone not available. Switch to text mode.");
+      return;
+    }
+
+    if (whisperMode) {
+      // Use MediaRecorder → Whisper STT
+      try {
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
+          : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+          : "audio/mp4";
+        const audioStream = new MediaStream(streamRef.current.getAudioTracks());
+        const mr = new MediaRecorder(audioStream, { mimeType });
+        audioChunksRef.current = [];
+        mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+        mr.onstop = async () => {
+          const blob = new Blob(audioChunksRef.current, { type: mimeType });
+          if (blob.size < 1000) { setOrbState("idle"); return; }
+          setOrbState("processing");
+          try {
+            const fd = new FormData();
+            fd.append("file", blob, "audio.webm");
+            fd.append("language", session?.language || "english");
+            const token = localStorage.getItem("mitharva_token");
+            const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/voice/stt`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: fd,
+            });
+            const data = await res.json();
+            if (data.text?.trim()) submitAnswer(data.text.trim());
+            else { setOrbState("idle"); toast.error("Couldn't hear you. Try again."); }
+          } catch {
+            setOrbState("idle"); toast.error("Transcription failed");
+          }
+        };
+        mediaRecorderRef.current = mr;
+        mr.start();
+        setOrbState("listening");
+      } catch (e) {
+        toast.error("Recording failed");
+        setOrbState("idle");
+      }
+      return;
+    }
+
+    // Fallback: Web Speech API
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       toast.error("Speech recognition unavailable. Switch to text mode.");
@@ -137,10 +188,14 @@ export default function InterviewRoom() {
     };
     recognitionRef.current = r;
     try { r.start(); } catch { setOrbState("idle"); }
-  }, [orbState, session]);
+  }, [orbState, session, whisperMode]);
 
   const stopListening = () => {
-    try { recognitionRef.current?.stop(); } catch {}
+    if (whisperMode && mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    } else {
+      try { recognitionRef.current?.stop(); } catch {}
+    }
   };
 
   const submitAnswer = async (answerText) => {
@@ -337,6 +392,9 @@ export default function InterviewRoom() {
                   </button>
                   <button onClick={() => setTextMode(true)} data-testid="switch-text" className="px-4 py-2 rounded-full border border-white/20 text-xs hover:border-gold hover:text-gold inline-flex items-center gap-1">
                     <KeyboardIcon size={12} /> Text Mode
+                  </button>
+                  <button onClick={() => setWhisperMode(!whisperMode)} data-testid="toggle-whisper" className={`px-4 py-2 rounded-full text-xs inline-flex items-center gap-1 ${whisperMode ? "border border-gold text-gold" : "border border-white/20 text-white/70 hover:border-gold hover:text-gold"}`}>
+                    <Sparkles size={12} /> {whisperMode ? "Whisper STT" : "Browser STT"}
                   </button>
                 </div>
               </>

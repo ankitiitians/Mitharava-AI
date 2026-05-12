@@ -4,6 +4,7 @@ import { Mic, BarChart3, Flame, Trophy, ArrowRight, TrendingUp, AlertCircle } fr
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, PolarRadiusAxis } from "recharts";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-10 space-y-8">
+      <OnboardingWizard />
       <div className="flex flex-wrap items-end justify-between gap-4 animate-fade-up">
         <div>
           <h1 className="font-display text-4xl font-semibold text-foreground">

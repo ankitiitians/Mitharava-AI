@@ -1,17 +1,46 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Download, Share2, RefreshCw, Home, BookOpen } from "lucide-react";
+import { Download, Share2, RefreshCw, Home, BookOpen, Loader2 } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, PolarRadiusAxis } from "recharts";
-import api from "@/lib/api";
+import { toast } from "sonner";
+import api, { API } from "@/lib/api";
 
 export default function InterviewResults() {
   const { id } = useParams();
   const [session, setSession] = useState(null);
   const [animScore, setAnimScore] = useState(0);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     api.get(`/sessions/${id}`).then((r) => setSession(r.data)).catch(() => {});
   }, [id]);
+
+  const downloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const token = localStorage.getItem("mitharva_token");
+      const res = await fetch(`${API}/sessions/${id}/report.pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `mitharva-report-${id.slice(0,8)}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded");
+    } catch {
+      toast.error("Download failed");
+    } finally { setDownloading(false); }
+  };
+
+  const shareReport = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Report link copied to clipboard");
+    } catch { toast.error("Copy failed"); }
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -65,8 +94,10 @@ export default function InterviewResults() {
             <div className="mt-5 text-sm text-foreground/70">📊 Better than 78% of all users this month</div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <button data-testid="results-share" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-gold-subtle text-foreground hover:border-gold hover:text-gold"><Share2 size={14} /> Share Report</button>
-              <button data-testid="results-download" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-gold-subtle text-foreground hover:border-gold hover:text-gold"><Download size={14} /> Download PDF</button>
+              <button onClick={shareReport} data-testid="results-share" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-gold-subtle text-foreground hover:border-gold hover:text-gold"><Share2 size={14} /> Share Report</button>
+              <button onClick={downloadPdf} disabled={downloading} data-testid="results-download" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-gold-subtle text-foreground hover:border-gold hover:text-gold disabled:opacity-60">
+                {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} {downloading ? "Generating..." : "Download PDF"}
+              </button>
               <Link to="/interview/setup" data-testid="results-retry" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full gradient-gold-bg text-navy-deep font-semibold"><RefreshCw size={14} /> Practice Again</Link>
             </div>
           </div>

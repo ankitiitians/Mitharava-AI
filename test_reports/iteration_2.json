@@ -1,0 +1,40 @@
+{
+  "summary": "Thorough backend testing of 4 deferred endpoints completed — all 13 new tests + 31 regression tests = 44/44 PASSED (100%). Verified: (1) POST /api/voice/stt with auth + small generated silent WAV returns 200 with text field; rejects missing file (422), non-audio (500 'Transcription failed'), unauthenticated (401/403), and >25MB upload (400 'too large'). (2) POST /api/resume/parse with on-the-fly reportlab-generated PDF returns 200 with {filename, parsed:{name,skills,education,experience,...}, text_length}; rejects non-PDF (500 'Resume parse failed') and unauth (401/403). (3) POST /api/profile/onboarding persists preparation_stage/previous_attempts/challenges/preferred_language, returns updated user with onboarding_completed=true, no _id/password leakage; persistence re-verified via /auth/me. (4) GET /api/sessions/{id}/report.pdf returns 200 with application/pdf and Content-Disposition attachment; body starts with %PDF- bytes (>1KB); 404 for non-existent session; 401/403 without auth. Razorpay remains MOCKED (expected).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/voice/stt", "issue": "Whisper happy-path with 1s silent WAV returns 200 but Emergent Whisper currently transcribes silence to '' (empty string) — acceptable per review spec but worth noting for monitoring real audio behaviour."},
+      {"endpoint": "/api/resume/parse", "issue": "5MB hard-cap is documented as 25MB in spec for STT only; resume cap (5MB) is correct but undocumented in API responses — consider returning the limit in the 400 detail."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_deferred_endpoints.py",
+    "/app/backend/tests/test_mitharva_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/pytest/deferred_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now 927 lines (was 712) — strongly recommend splitting into routers: auth.py, sessions.py, questions.py, subscription.py, voice.py, resume.py, reports.py, onboarding.py, seed.py.",
+    "/api/voice/stt has 25MB size check AFTER reading the full file into memory — for large bodies this still consumes RAM; consider checking Content-Length header first or streaming read with early abort.",
+    "/api/resume/parse: pypdf failure surfaces as 500 'Resume parse failed' which is semantically a client-side bad input — consider returning 400 for PdfReadError to distinguish from server errors.",
+    "/api/profile/onboarding lacks enum validation on preparation_stage and previous_attempts — any string is accepted (e.g., previous_attempts='2' as string was accepted in tests).",
+    "PDF report endpoint imports reportlab inside the handler on every call — move imports to module top level for ~50-100ms latency reduction per request.",
+    "STT endpoint imports OpenAISpeechToText inside handler on every call — same module-level import improvement opportunity.",
+    "Demo seed sessions still have the typo 'voice' if camera_used else 'voice' (no 'voice_camera' branch) — unchanged from previous review."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_deferred_endpoints.py"
+  ],
+  "success_rate": {"backend": "100% (44/44)", "frontend": "not tested (skipped per request)"},
+  "test_credentials": "demo@mitharva.ai / Demo@2026 (verified working)",
+  "seed_data_creation": "No new persistent seed data. Ephemeral test artifacts (silent WAV, reportlab PDF) generated in-memory per test. The demo user's profile is now mutated with onboarding fields, resume_parsed_data, and resume_filename — tests are idempotent but state-mutating.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 4 deferred endpoints (voice/stt, resume/parse, profile/onboarding, sessions/{id}/report.pdf) PASS. Combined test suite is now /app/backend/tests/ with two files (test_mitharva_backend.py for original 31, test_deferred_endpoints.py for new 13). Run `pytest backend/tests/ -v` to retest. STT, resume parse, and Gemini calls go through real Emergent LLM key; allow ~5-10s per resume parse. Demo user's plan gets upgraded to 'pro' and onboarding fields are written — re-running tests is safe but observe state mutations. Razorpay is the only remaining MOCKED integration."
+}

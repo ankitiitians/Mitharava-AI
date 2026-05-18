@@ -1,0 +1,28 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+before_script:
+  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+
+build-backend:
+  stage: build
+  script:
+    - docker build -t mitharva/mitharava-ai-backend:v1 ./backend
+    - docker push mitharva/mitharava-ai-backend:v1
+
+build-frontend:
+  stage: build
+  script:
+    - docker build -t mitharva/mitharava-ai-frontend:v1 ./frontend
+    - docker push mitharva/mitharava-ai-frontend:v1
+
+deploy:
+  stage: deploy
+  script:
+    - docker compose pull
+    - docker compose down
+    - docker compose up -d
